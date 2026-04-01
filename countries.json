@@ -1,0 +1,63 @@
+{
+  "US": {
+    "name": "United States",
+    "currency": "USD",
+    "language": "en",
+    "exchange_rate": 1.0,
+    "shipping": [
+      { "country": "US", "service": "Standard", "price": "0.00 USD" }
+    ],
+    "optimized_copy": "tests/optimized_copy.json",
+    "feed_title": "DISURI Beauty — US Product Feed",
+    "output_file": "output/feed-us.xml"
+  },
+  "MX": {
+    "name": "Mexico",
+    "currency": "MXN",
+    "language": "es",
+    "exchange_rate": 17.15,
+    "shipping": [
+      { "country": "MX", "service": "International Standard", "price": "249.00 MXN" }
+    ],
+    "optimized_copy": "tests/optimized_copy_es.json",
+    "feed_title": "DISURI Beauty — Mexico Product Feed",
+    "output_file": "output/feed-mx.xml"
+  },
+  "CO": {
+    "name": "Colombia",
+    "currency": "COP",
+    "language": "es",
+    "exchange_rate": 4150.0,
+    "shipping": [
+      { "country": "CO", "service": "International Standard", "price": "59900 COP" }
+    ],
+    "optimized_copy": "tests/optimized_copy_es.json",
+    "feed_title": "DISURI Beauty — Colombia Product Feed",
+    "output_file": "output/feed-co.xml"
+  },
+  "BR": {
+    "name": "Brazil",
+    "currency": "BRL",
+    "language": "pt",
+    "exchange_rate": 5.05,
+    "shipping": [
+      { "country": "BR", "service": "International Standard", "price": "79.90 BRL" }
+    ],
+    "optimized_copy": "tests/optimized_copy_pt.json",
+    "feed_title": "DISURI Beauty — Brazil Product Feed",
+    "output_file": "output/feed-br.xml"
+  },
+  "DO": {
+    "name": "Dominican Republic",
+    "currency": "USD",
+    "language": "es",
+    "exchange_rate": 1.0,
+    "shipping": [
+      { "country": "DO", "service": "International Standard", "price": "14.99 USD" }
+    ],
+    "optimized_copy": "tests/optimized_copy_es.json",
+    "feed_title": "DISURI Beauty — Dominican Republic Product Feed",
+    "output_file": "output/feed-do.xml",
+    "notes": "DR has limited GMC support — can also be served via US feed with international shipping"
+  }
+}

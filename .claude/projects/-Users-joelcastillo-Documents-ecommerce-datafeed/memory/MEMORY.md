@@ -1,0 +1,1 @@
+- [Multi-country feed + channel marketing](project_goals.md) — Joel's end-state: localized feeds → AI optimization → multi-channel distribution
