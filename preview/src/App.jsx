@@ -1,1 +1,1 @@
-export { default } from "../../src/dco-dashboard.jsx";
+export { default } from "./FeedOptimizer.jsx";

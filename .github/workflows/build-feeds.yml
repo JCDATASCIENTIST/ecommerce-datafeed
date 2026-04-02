@@ -1,0 +1,154 @@
+name: Build & Deploy Feeds
+
+on:
+  schedule:
+    # Run daily at 6:00 AM UTC (2:00 AM EDT)
+    - cron: "0 6 * * *"
+  workflow_dispatch: # Manual trigger from GitHub UI
+  push:
+    paths:
+      - "tests/sample_products.json"
+      - "tests/optimized_copy*.json"
+      - "countries.json"
+      - "src/feed_generator.py"
+      - "src/dco_generator.py"
+      - "src/config.py"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update exchange rates
+        run: python3 src/update_rates.py
+
+      - name: Generate country feeds
+        run: python3 src/feed_generator.py -i tests/sample_products.json --country all
+
+      - name: Generate DCO ad creatives
+        run: python3 src/dco_generator.py -i tests/sample_products.json --country all
+
+      - name: Prepare Pages directory
+        run: |
+          mkdir -p pages/feeds pages/dco
+
+          # Copy XML feeds
+          cp output/feed-*.xml pages/feeds/
+
+          # Copy DCO files
+          cp output/dco-google-*.csv pages/dco/
+          cp output/dco-meta-*.csv pages/dco/
+          cp output/dco-*.json pages/dco/
+
+          # Create index page
+          cat > pages/index.html << 'HTMLEOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>DISURI Beauty — Product Feeds</title>
+            <style>
+              body { font-family: Georgia, serif; background: #faf8f6; color: #1a1411; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+              h1 { font-size: 22px; font-weight: 400; }
+              h2 { font-size: 14px; font-family: monospace; color: #c4788a; letter-spacing: 2px; text-transform: uppercase; margin-top: 32px; }
+              a { color: #c4788a; font-family: monospace; font-size: 13px; }
+              ul { list-style: none; padding: 0; }
+              li { padding: 6px 0; border-bottom: 1px solid #ede9e5; }
+              .sub { color: #888; font-size: 11px; font-family: monospace; }
+            </style>
+          </head>
+          <body>
+            <h1>DISURI Beauty — Product Feeds</h1>
+            <p class="sub">Auto-updated daily with live exchange rates</p>
+
+            <h2>GMC XML Feeds</h2>
+            <ul>
+              <li><a href="feeds/feed-us.xml">US</a> <span class="sub">English / USD</span></li>
+              <li><a href="feeds/feed-mx.xml">Mexico</a> <span class="sub">Spanish / MXN</span></li>
+              <li><a href="feeds/feed-co.xml">Colombia</a> <span class="sub">Spanish / COP</span></li>
+              <li><a href="feeds/feed-br.xml">Brazil</a> <span class="sub">Portuguese / BRL</span></li>
+              <li><a href="feeds/feed-do.xml">Dominican Republic</a> <span class="sub">Spanish / USD</span></li>
+            </ul>
+
+            <h2>DCO Ad Creatives</h2>
+            <ul>
+              <li><a href="dco/dco-google-us.csv">Google Ads — US</a></li>
+              <li><a href="dco/dco-google-mx.csv">Google Ads — MX</a></li>
+              <li><a href="dco/dco-google-co.csv">Google Ads — CO</a></li>
+              <li><a href="dco/dco-google-br.csv">Google Ads — BR</a></li>
+              <li><a href="dco/dco-google-do.csv">Google Ads — DO</a></li>
+            </ul>
+            <ul>
+              <li><a href="dco/dco-meta-us.csv">Meta Catalog — US</a></li>
+              <li><a href="dco/dco-meta-mx.csv">Meta Catalog — MX</a></li>
+              <li><a href="dco/dco-meta-co.csv">Meta Catalog — CO</a></li>
+              <li><a href="dco/dco-meta-br.csv">Meta Catalog — BR</a></li>
+              <li><a href="dco/dco-meta-do.csv">Meta Catalog — DO</a></li>
+            </ul>
+          </body>
+          </html>
+          HTMLEOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Print feed URLs
+        run: |
+          BASE="${{ steps.deployment.outputs.page_url }}"
+          echo "══════════════════════════════════════════"
+          echo "  Feed URLs for Google Merchant Center:"
+          echo "══════════════════════════════════════════"
+          echo "  US:  ${BASE}feeds/feed-us.xml"
+          echo "  MX:  ${BASE}feeds/feed-mx.xml"
+          echo "  CO:  ${BASE}feeds/feed-co.xml"
+          echo "  BR:  ${BASE}feeds/feed-br.xml"
+          echo "  DO:  ${BASE}feeds/feed-do.xml"
+          echo "══════════════════════════════════════════"
+
+  commit-rates:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update exchange rates
+        run: python3 src/update_rates.py
+
+      - name: Commit updated rates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add countries.json
+          git diff --staged --quiet || git commit -m "chore: update exchange rates (daily)"
+          git push

@@ -35,37 +35,55 @@ prices, and constituent SKUs are finalized.
 /
 ├── CLAUDE.md                          # This file — project context & conventions
 ├── products.json                      # Product catalog (source of truth for feed)
+├── countries.json                     # Multi-country configs (currency, language, shipping, rates)
+├── build.sh                           # One-command pipeline: rates → feeds → DCO
 ├── src/
-│   ├── config.py                      # Store-level settings & feed defaults
-│   ├── feed_generator.py              # Validates products.json → writes feed.xml
+│   ├── config.py                      # Store-level settings, multi-country helpers
+│   ├── feed_generator.py              # Validates products.json → writes per-country XML feeds
 │   ├── fetch_shopify.py               # Shopify Admin API (OAuth) → products.json
-│   └── dco-dashboard.jsx              # React: AI Feed Studio (Claude-powered title/desc optimizer)
-├── n8n/
-│   ├── gmc-feed-code-node.js          # n8n Code node: Shopify JSON → GMC XML string
-│   └── disuri-gmc-feed-workflow.json  # Full n8n workflow (import into jcmarketing.app.n8n.cloud)
+│   ├── dco-dashboard.jsx              # React: AI Feed Studio (Claude-powered title/desc optimizer)
+│   ├── dco_generator.py               # DCO ad creatives for Google Ads + Meta per market
+│   └── update_rates.py                # Fetches live USD exchange rates → updates countries.json
+├── .github/
+│   └── workflows/
+│       └── build-feeds.yml            # Daily cron: rates → feeds → DCO → deploy to GitHub Pages
+├── preview/                           # Vite dev server for dashboard (also deployed to Vercel)
 ├── tests/
 │   ├── sample_products.json           # 7-item test fixture (real SKUs)
-│   └── optimized_copy.json            # AI-optimized titles/descriptions overlay
+│   ├── optimized_copy.json            # AI-optimized titles/descriptions (English)
+│   ├── optimized_copy_es.json         # AI-optimized titles/descriptions (Spanish)
+│   └── optimized_copy_pt.json         # AI-optimized titles/descriptions (Portuguese)
 └── output/
-    └── disuri_beauty_feed.xml         # Generated feed (gitignored)
+    ├── feed-{us,mx,co,br,do}.xml      # Per-country GMC feeds (gitignored)
+    ├── dco-google-{cc}.csv             # Google Ads Performance Max assets
+    ├── dco-meta-{cc}.csv               # Meta Dynamic Product Ads catalog
+    └── dco-{cc}.json                   # Combined DCO JSON for dashboard
 ```
 
 ## Usage
 
 ```bash
-# Generate feed from sample data
-python3 src/feed_generator.py -i tests/sample_products.json -o output/feed.xml
+# Full pipeline: update rates → generate all country feeds → generate DCO creatives
+./build.sh
 
-# Generate feed with AI-optimized titles/descriptions
-python3 src/feed_generator.py -i tests/sample_products.json \
-  --optimized tests/optimized_copy.json -o output/feed-optimized.xml
+# Generate feeds for a single country
+python3 src/feed_generator.py -i tests/sample_products.json --country MX
+
+# Generate feeds for all countries
+python3 src/feed_generator.py -i tests/sample_products.json --country all
+
+# Generate DCO ad creatives (Google Ads + Meta) for all countries
+python3 src/dco_generator.py -i tests/sample_products.json --country all
+
+# Update exchange rates only
+python3 src/update_rates.py
 
 # Generate feed from live Shopify data (client_credentials OAuth)
 export SHOPIFY_STORE_URL=https://disuri-beauty.myshopify.com
 export SHOPIFY_CLIENT_ID=your_client_id
 export SHOPIFY_CLIENT_SECRET=your_client_secret
 python3 src/fetch_shopify.py          # authenticates → writes products.json
-python3 src/feed_generator.py         # reads products.json → output/feed.xml
+./build.sh                            # rebuild everything
 ```
 
 ## Tech Stack
@@ -74,7 +92,7 @@ python3 src/feed_generator.py         # reads products.json → output/feed.xml
 - `xml.etree.ElementTree` + `minidom` for XML generation
 - `urllib.request` for Shopify API calls (client_credentials OAuth)
 - React + Claude API for AI Feed Studio (dco-dashboard.jsx)
-- n8n for automated feed sync (every 6 hours)
+- GitHub Actions for automated daily feed builds + GitHub Pages hosting
 
 ## AI-Optimized Copy Workflow
 
@@ -100,30 +118,17 @@ The `optimized_copy.json` schema:
 ]
 ```
 
-## n8n Automation (Phase 2)
+## Automation (GitHub Actions)
 
-The `n8n/` folder contains a complete workflow for `jcmarketing.app.n8n.cloud`
-that keeps the feed live forever:
+Daily cron at 6:00 AM UTC via `.github/workflows/build-feeds.yml`:
 
-```
-Cron (6h) → Shopify OAuth → Fetch Products → Build XML → Upload R2/S3 → Ping GMC
-                                                  ↘ Error → Slack DM
-```
+1. Fetches live exchange rates → updates `countries.json`
+2. Generates per-country XML feeds (US, MX, CO, BR, DO)
+3. Generates DCO ad creatives (Google Ads CSV + Meta CSV)
+4. Deploys feeds to GitHub Pages as stable public URLs for GMC
 
-**Setup:**
-1. Import `n8n/disuri-gmc-feed-workflow.json` into your n8n instance
-2. Paste the contents of `n8n/gmc-feed-code-node.js` into the Code node
-3. Set environment variables in n8n:
-   - `SHOPIFY_STORE_URL`, `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`
-   - `R2_ENDPOINT`, `R2_BUCKET` (Cloudflare R2 or S3-compatible)
-   - `GMC_MERCHANT_ID`, `GMC_FEED_ID`, `GMC_ACCESS_TOKEN`
-   - `SLACK_FEED_CHANNEL`
-4. Configure Slack + S3/R2 credentials in n8n
-5. The R2 public URL becomes your stable GMC feed URL — set it once in GMC
-
-The Code node handles GTIN lookup, bundle flagging (`identifier_exists: no`),
-compare_at_price → sale_price mapping, and optimized copy overlay. Error branch
-fires a Slack DM before bad data reaches GMC.
+Can also be triggered manually from the GitHub Actions tab or on push when
+feed-related files change.
 
 ## Feed Format
 
