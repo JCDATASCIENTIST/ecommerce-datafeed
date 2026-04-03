@@ -29,7 +29,7 @@ NS_PREFIX = "g"
 
 REQUIRED_FIELDS = ("id", "title", "description", "link", "image_link", "price")
 VALID_AVAILABILITY = ("in_stock", "out_of_stock", "preorder", "backorder")
-PRICE_RE = re.compile(r"^\d+\.?\d*\s[A-Z]{3}$")
+PRICE_RE = re.compile(r"^\d+(?:\.\d{2})?\s[A-Z]{3}$")
 
 
 # ── Validation ──────────────────────────────────────────────────────────────
@@ -104,21 +104,19 @@ def localize_products(products: list[dict], config: dict) -> list[dict]:
     currency = config["currency"]
     country = config["country"]
 
-    if rate == 1.0 and currency == "USD":
-        return products
-
+    # Always deep copy — even USD countries may need different shipping (e.g., DO)
     localized = copy.deepcopy(products)
     for product in localized:
-        # Convert main price
-        if product.get("price"):
-            product["price"] = convert_price(product["price"], rate, currency)
+        # Convert prices for non-USD currencies
+        if rate != 1.0 or currency != "USD":
+            if product.get("price"):
+                product["price"] = convert_price(product["price"], rate, currency)
+            if product.get("sale_price"):
+                product["sale_price"] = convert_price(product["sale_price"], rate, currency)
 
-        # Convert sale price
-        if product.get("sale_price"):
-            product["sale_price"] = convert_price(product["sale_price"], rate, currency)
-
-        # Replace shipping with country-specific
-        product["shipping"] = config.get("default_shipping", [])
+        # Always replace shipping with country-specific config
+        if country != "US":
+            product["shipping"] = config.get("default_shipping", [])
 
     return localized
 

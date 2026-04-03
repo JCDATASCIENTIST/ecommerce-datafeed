@@ -202,9 +202,10 @@ export default function FeedOptimizer() {
   const [activeTab, setActiveTab] = useState({});
   const [xmlCopied, setXmlCopied] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
-  const [apiKey, setApiKey] = useState(
-    typeof import.meta !== "undefined" && import.meta.env?.VITE_ANTHROPIC_API_KEY || ""
-  );
+  const [apiKey, setApiKey] = useState(() => {
+    try { return import.meta.env?.VITE_ANTHROPIC_API_KEY || ""; }
+    catch { return ""; }
+  });
   const [showApiInput, setShowApiInput] = useState(false);
 
   const handleOptimize = useCallback(
@@ -437,7 +438,22 @@ export default function FeedOptimizer() {
                   cursor: "pointer",
                 }}
               >
-                {jsonCopied ? "Copied!" : "Export optimized_copy.json"}
+                Export optimized_copy.json
+              </button>
+              <button
+                onClick={handleCopyJSON}
+                style={{
+                  background: "transparent",
+                  color: ROSE_MID,
+                  border: `1px solid ${ROSE}44`,
+                  borderRadius: 8,
+                  padding: "10px 16px",
+                  fontSize: 12,
+                  fontFamily: "monospace",
+                  cursor: "pointer",
+                }}
+              >
+                {jsonCopied ? "Copied!" : "Copy JSON"}
               </button>
             </>
           )}

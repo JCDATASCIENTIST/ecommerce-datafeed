@@ -49,9 +49,9 @@ TEMPLATES = {
             "K-Beauty {category} with Published Concentrations",
         ],
         "descriptions": [
-            "{short_name} — {key_benefit}. Korean-formulated with clinically-backed actives. Shop DISURI Beauty.",
-            "Discover {short_name} by DISURI Beauty. {key_benefit}. Full ingredient transparency. ${price}.",
-            "K-beauty {category_lower} with published concentrations. {key_benefit}. Free shipping. Shop now.",
+            "{short_name} — {key_benefit}. Korean-formulated, clinically-backed. DISURI Beauty.",
+            "{short_name} by DISURI Beauty. {key_benefit}. Full transparency. ${price}.",
+            "K-beauty {category_lower}. {key_benefit}. Published concentrations. Shop now.",
         ],
         "cta": "Shop Now",
         "meta_overlay": "{key_benefit} | K-Beauty Formula | Free Shipping",
@@ -63,7 +63,7 @@ TEMPLATES = {
             "DISURI {category}",
             "Compra {short_name}",
             "{key_benefit}",
-            "{category} Coreano",
+            "{category} Coreana",
             "Fórmula Clínica",
             "Transparencia Total",
             "${price} {category}",
@@ -76,9 +76,9 @@ TEMPLATES = {
             "K-Beauty {category} con Concentraciones Publicadas",
         ],
         "descriptions": [
-            "{short_name} — {key_benefit}. Formulación coreana con activos clínicamente respaldados. Compra DISURI Beauty.",
-            "Descubre {short_name} de DISURI Beauty. {key_benefit}. Transparencia total de ingredientes. ${price}.",
-            "K-beauty {category_lower} con concentraciones publicadas. {key_benefit}. Compra ahora.",
+            "{short_name} — {key_benefit}. Formulación coreana clínica. DISURI Beauty.",
+            "{short_name} de DISURI Beauty. {key_benefit}. Transparencia total. ${price}.",
+            "K-beauty {category_lower}. {key_benefit}. Concentraciones publicadas. Compra ahora.",
         ],
         "cta": "Comprar Ahora",
         "meta_overlay": "{key_benefit} | Fórmula K-Beauty | Skincare Coreano",
@@ -90,7 +90,7 @@ TEMPLATES = {
             "DISURI {category}",
             "Compre {short_name}",
             "{key_benefit}",
-            "{category} Coreano",
+            "{category} Coreana",
             "Fórmula Clínica",
             "Transparência Total",
             "R${price} {category}",
@@ -103,9 +103,9 @@ TEMPLATES = {
             "K-Beauty {category} com Concentrações Publicadas",
         ],
         "descriptions": [
-            "{short_name} — {key_benefit}. Formulação coreana com ativos clinicamente comprovados. Compre DISURI Beauty.",
-            "Descubra {short_name} da DISURI Beauty. {key_benefit}. Transparência total de ingredientes. R${price}.",
-            "K-beauty {category_lower} com concentrações publicadas. {key_benefit}. Compre agora.",
+            "{short_name} — {key_benefit}. Formulação coreana clínica. DISURI Beauty.",
+            "{short_name} da DISURI Beauty. {key_benefit}. Transparência total. R${price}.",
+            "K-beauty {category_lower}. {key_benefit}. Concentrações publicadas. Compre agora.",
         ],
         "cta": "Comprar Agora",
         "meta_overlay": "{key_benefit} | Fórmula K-Beauty | Skincare Coreano",
@@ -155,13 +155,33 @@ SHORT_NAMES = {
 }
 
 CATEGORIES = {
-    "ultimate-snail-mucin-cream": "Cream",
-    "triple-collagen-firming-cream": "Cream",
-    "hyaluronic-acid-intense-cream": "Cream",
-    "triple-collagen-firming-foam": "Cleanser",
-    "triple-collagen-firming-toner": "Toner",
-    "triple-collagen-firming-eye-cream": "Eye Cream",
-    "triple-collagen-firming-essence": "Essence",
+    "en": {
+        "ultimate-snail-mucin-cream": "Cream",
+        "triple-collagen-firming-cream": "Cream",
+        "hyaluronic-acid-intense-cream": "Cream",
+        "triple-collagen-firming-foam": "Cleanser",
+        "triple-collagen-firming-toner": "Toner",
+        "triple-collagen-firming-eye-cream": "Eye Cream",
+        "triple-collagen-firming-essence": "Essence",
+    },
+    "es": {
+        "ultimate-snail-mucin-cream": "Crema",
+        "triple-collagen-firming-cream": "Crema",
+        "hyaluronic-acid-intense-cream": "Crema",
+        "triple-collagen-firming-foam": "Limpiador",
+        "triple-collagen-firming-toner": "Tónico",
+        "triple-collagen-firming-eye-cream": "Crema de Ojos",
+        "triple-collagen-firming-essence": "Esencia",
+    },
+    "pt": {
+        "ultimate-snail-mucin-cream": "Creme",
+        "triple-collagen-firming-cream": "Creme",
+        "hyaluronic-acid-intense-cream": "Creme",
+        "triple-collagen-firming-foam": "Limpador",
+        "triple-collagen-firming-toner": "Tônico",
+        "triple-collagen-firming-eye-cream": "Creme para Olhos",
+        "triple-collagen-firming-essence": "Essência",
+    },
 }
 
 
@@ -194,11 +214,12 @@ def generate_creatives(product: dict, lang: str, config: dict) -> dict:
     else:
         price_display = price_str
 
+    categories = CATEGORIES.get(lang, CATEGORIES["en"])
     vars = {
         "title": product["title"],
         "short_name": SHORT_NAMES.get(pid, product["title"]),
-        "category": CATEGORIES.get(pid, "Skincare"),
-        "category_lower": CATEGORIES.get(pid, "skincare").lower(),
+        "category": categories.get(pid, "Skincare"),
+        "category_lower": categories.get(pid, "skincare").lower(),
         "key_benefit": benefits.get(pid, "K-Beauty skincare"),
         "price": price_display,
         "brand": "DISURI Beauty",
@@ -296,7 +317,7 @@ def export_meta_csv(all_creatives: list[dict], output_path: str) -> str:
                 c["link"],
                 c["image_link"],
                 c["price_local"],
-                "in stock",
+                "in_stock",
                 "DISURI Beauty",
                 "new",
                 c["meta_overlay"],

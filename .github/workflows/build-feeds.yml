@@ -100,6 +100,13 @@ jobs:
           </html>
           HTMLEOF
 
+      - name: Save updated countries.json
+        if: github.event_name == 'schedule'
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-rates
+          path: countries.json
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -137,13 +144,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Download updated rates from build job
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.12"
-
-      - name: Update exchange rates
-        run: python3 src/update_rates.py
+          name: updated-rates
 
       - name: Commit updated rates
         run: |
