@@ -35,7 +35,7 @@
     "name": "Colombia",
     "currency": "COP",
     "language": "es",
-    "exchange_rate": 3342.3581,
+    "exchange_rate": 3342.3308,
     "shipping": [
       {
         "country": "CO",
@@ -51,7 +51,7 @@
     "name": "Brazil",
     "currency": "BRL",
     "language": "pt",
-    "exchange_rate": 5.1146,
+    "exchange_rate": 5.1156,
     "shipping": [
       {
         "country": "BR",
