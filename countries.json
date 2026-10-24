@@ -19,7 +19,7 @@
     "name": "Mexico",
     "currency": "MXN",
     "language": "es",
-    "exchange_rate": 18.734,
+    "exchange_rate": 18.6923,
     "shipping": [
       {
         "country": "MX",
@@ -35,7 +35,7 @@
     "name": "Colombia",
     "currency": "COP",
     "language": "es",
-    "exchange_rate": 3183.9865,
+    "exchange_rate": 3179.8631,
     "shipping": [
       {
         "country": "CO",
